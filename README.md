@@ -15,5 +15,5 @@ requierements :
 3. you're good :+1:
 
 # Authors
-- [Ewan](github.com/golednpeps)
-- [Alexandre](github.com/nnaova)
+- [Ewan](https://github.com/goldenpeps)
+- [Alexandre](https://github.com/nnaova)
