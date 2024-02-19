@@ -15,5 +15,5 @@ requierements :
 3. you're good :+1:
 
 # Authors
-- Ewan [@goldenpeps]
-- Alexandre [@nnaova]
+- Ewan[@goldenpeps]
+- Alexandre[@nnaova]
