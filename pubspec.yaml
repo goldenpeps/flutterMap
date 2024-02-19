@@ -14,6 +14,8 @@ dependencies:
   geolocator: ^7.6.2
   google_maps_flutter: ^2.1.0
   carousel_slider: ^4.0.0
+  flutter_osm_plugin: ^0.70.4
+  flutter_map: ^6.1.0
 
 dev_dependencies:
   flutter_test:

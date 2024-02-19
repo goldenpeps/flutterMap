@@ -24,6 +24,9 @@ class MapLocation extends StatefulWidget {
 class _MapLocationState extends State<MapLocation> {
   String userCoordinates = '';
   double calcul = 0.0;
+  double userLatex = 0.0;
+  double userLngex = 0.0;
+
   @override
   void initState() {
     super.initState();
@@ -41,6 +44,8 @@ class _MapLocationState extends State<MapLocation> {
         final double userLng = double.parse(data[0]['lon']);
         setState(() {
           userCoordinates = 'User Coordinates: $userLat, $userLng';
+          userLatex = userLat;
+          userLngex = userLng;
           calcul = distanceVolOiseau(widget.latitude, widget.longitude, userLat, userLng);
         });
       } else {
@@ -111,6 +116,14 @@ class _MapLocationState extends State<MapLocation> {
                 TileLayer(
                   urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                   subdomains: ['a', 'b', 'c'],
+                ),
+                PolylineLayer(
+                  polylines: [
+                    Polyline(
+                      points: [LatLng(widget.latitude, widget.longitude), LatLng(userLatex, userLngex), ],
+                      color: Colors.blue,
+                    ),
+                  ],
                 ),
                 MarkerLayer(
                   markers: [
