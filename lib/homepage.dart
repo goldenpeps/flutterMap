@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:carousel_slider/carousel_slider.dart';
@@ -95,14 +96,9 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-      ),
-      body: Column(
-
+      body: Column (
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-
           CarouselSlider(
             options: CarouselOptions(
               height: 200,
@@ -115,18 +111,51 @@ class _HomePageState extends State<HomePage> {
             padding: const EdgeInsets.all(16.0),
             child: TextField(
               controller: _textInputController,
-              decoration: const  InputDecoration(
+              decoration: const InputDecoration(
                 hintText: 'Entrez quelque chose...',
+                border: OutlineInputBorder(),
               ),
             ),
           ),
           ElevatedButton(
-            onPressed: _navigateToMapLocation,
+            onPressed: () {
+              // Check if the input is not empty
+              if (_textInputController.text.isNotEmpty) {
+                // If input is valid, navigate to map location
+                _navigateToMapLocation();
+              } else {
+                // If input is not valid, you can show an error message or take other actions
+                // For now, let's just print an error message
+                print('Veuillez entrer quelque chose avant de valider.');
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              foregroundColor: Colors.white,
+              backgroundColor: Colors.blue,
+              padding: EdgeInsets.all(16),
+              textStyle: TextStyle(fontSize: 18),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
             child: const Text('Valider'),
           ),
-          Text(
-            message,
-            style:TextStyle(fontSize: 18),
+          const Column(
+            children: <Widget>[
+              SizedBox(height: 100),
+            ],
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [Container(margin: const EdgeInsets.all(15.0),
+              padding: const EdgeInsets.all(16.0),
+              decoration: BoxDecoration(
+                  border: Border.all(color: Colors.blueAccent)
+              ),
+              child: Text(
+                message,
+                style:TextStyle(fontSize: 18),
+              ),)],
           ),
         ],
       ),
