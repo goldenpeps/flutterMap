@@ -28,6 +28,7 @@ class _HomePageState extends State<HomePage> {
     _getLocation();
     _getDataIfNotExpired();
   }
+
   Future<void> _getDataIfNotExpired() async {
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -58,6 +59,7 @@ class _HomePageState extends State<HomePage> {
       });
     }
   }
+
   Future<void> _getLocation() async {
     try {
       Position position = await Geolocator.getCurrentPosition(
@@ -92,6 +94,7 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
