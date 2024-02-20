@@ -28,8 +28,10 @@ class _MapLocationState extends State<MapLocation> {
   double calCul = 0.0;
   double userLatex = 0.0;
   double userLngex = 0.0;
+
   static const String _keyData = 'myData';
   static const String _keyExpiration = 'expirationTime';
+
   @override
   void initState() {
     super.initState();
