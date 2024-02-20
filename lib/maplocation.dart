@@ -100,8 +100,9 @@ class _MapLocationState extends State<MapLocation> {
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: () async {
-        // Intercepter l'action de retour arrière
-        return false; // Empêcher la fermeture automatique
+        // Empêcher la fermeture automatique en appuyant sur la flèche de retour
+        Navigator.of(context).pop(widget.userInput);
+        return false;
       },
       child: Scaffold(
         appBar: AppBar(
