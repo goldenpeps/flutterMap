@@ -6,12 +6,17 @@ import 'package:http/http.dart' as http;
 import 'dart:math' show sin, cos, sqrt, atan2;
 import 'package:shared_preferences/shared_preferences.dart';
 
+class AppConstants {
+  static const String keyData = 'myData';
+  static const String keyExpiration = 'expirationTime';
+}
+
 class MapLocation extends StatefulWidget {
   final double latitude;
   final double longitude;
   final String userInput;
 
-  MapLocation({
+  const MapLocation({
     required this.latitude,
     required this.longitude,
     required this.userInput,
@@ -23,12 +28,9 @@ class MapLocation extends StatefulWidget {
 
 class _MapLocationState extends State<MapLocation> {
   String userCoordinates = '';
-  double calCul = 0.0;
+  double calc = 0.0;
   double userLatex = 0.0;
   double userLngex = 0.0;
-
-  static const String _keyData = 'myData';
-  static const String _keyExpiration = 'expirationTime';
 
   @override
   void initState() {
@@ -40,12 +42,10 @@ class _MapLocationState extends State<MapLocation> {
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       DateTime expirationTime = DateTime.now().add(expirationDuration);
-      await prefs.setString(_keyData, data);
-      await prefs.setString(_keyExpiration, expirationTime.toIso8601String());
-      print('Data saved to SharedPreferences.');
+      await prefs.setString(AppConstants.keyData, data);
+      await prefs.setString(AppConstants.keyExpiration, expirationTime.toIso8601String());
       return true;
-    } catch (e) {
-      print('Error saving data to SharedPreferences: $e');
+    } catch (error) {
       return false;
     }
   }
@@ -64,7 +64,7 @@ class _MapLocationState extends State<MapLocation> {
           userCoordinates = 'User Coordinates: $userLat, $userLng';
           userLatex = userLat;
           userLngex = userLng;
-          calCul = distanceVolBird(widget.latitude, widget.longitude, userLat, userLng);
+          calc = distanceVolBird(widget.latitude, widget.longitude, userLat, userLng);
           saveDataWithExpiration(widget.userInput, const Duration(hours: 2, minutes: 3, seconds: 2));
         });
       } else {
@@ -73,7 +73,7 @@ class _MapLocationState extends State<MapLocation> {
         });
       }
     } else {
-      print('Failed to fetch coordinates');
+      // Handle error
     }
   }
 
@@ -98,67 +98,76 @@ class _MapLocationState extends State<MapLocation> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Map Location'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-      ),
-      body: Column(
-        children: [
-          const SizedBox(height: 20),
-          Text(
-            'latitude: ${widget.latitude}',
-            style:const TextStyle(fontSize: 18),
-          ),
-          Text(
-            'longitude: ${widget.longitude}',
-            style:const TextStyle(fontSize: 18),
-          ),
-          Text(
-            'User Input: ${widget.userInput}',
-            style: const TextStyle(fontSize: 18),
-          ),
-          Text(
-            'distance: $calCul', // Display user coordinates here
-            style:const TextStyle(fontSize: 18),
-          ),
-          Text(
-            userCoordinates, // Display user coordinates here
-            style:const TextStyle(fontSize: 18),
-          ),
-          Expanded(
-            child: FlutterMap(
-              options: MapOptions(
-                initialCenter: LatLng(widget.latitude, widget.longitude),
-                initialZoom: 9.2,
-              ),
-              children: [
-                TileLayer(
-                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                  subdomains: const ['a', 'b', 'c'],
-                ),
-                PolylineLayer(
-                  polylines: [
-                    Polyline(
-                      points: [LatLng(widget.latitude, widget.longitude), LatLng(userLatex, userLngex), ],
-                      color: Colors.blue,
-                    ),
-                  ],
-                ),
-                MarkerLayer(
-                  markers: [
-                    Marker(
-                      width: 30.0,
-                      height: 30.0,
-                      point: LatLng(widget.latitude, widget.longitude),
-                      child: const FlutterLogo(),
-                    ),
-                  ],
-                ),
-              ],
+    return WillPopScope(
+      onWillPop: () async {
+        // Intercepter l'action de retour arrière
+        return false; // Empêcher la fermeture automatique
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Map Location'),
+          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        ),
+        body: Column(
+          children: [
+            const SizedBox(height: 20),
+            Text(
+              'latitude: ${widget.latitude}',
+              style: const TextStyle(fontSize: 18),
             ),
-          ),
-        ],
+            Text(
+              'longitude: ${widget.longitude}',
+              style: const TextStyle(fontSize: 18),
+            ),
+            Text(
+              'User Input: ${widget.userInput}',
+              style: const TextStyle(fontSize: 18),
+            ),
+            Text(
+              'distance: $calc', // Display user coordinates here
+              style: const TextStyle(fontSize: 18),
+            ),
+            Text(
+              userCoordinates, // Display user coordinates here
+              style: const TextStyle(fontSize: 18),
+            ),
+            Expanded(
+              child: FlutterMap(
+                options: MapOptions(
+                  initialCenter: LatLng(widget.latitude, widget.longitude),
+                  initialZoom: 9.2,
+                ),
+                children: [
+                  TileLayer(
+                    urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    subdomains: const ['a', 'b', 'c'],
+                  ),
+                  PolylineLayer(
+                    polylines: [
+                      Polyline(
+                        points: [
+                          LatLng(widget.latitude, widget.longitude),
+                          LatLng(userLatex, userLngex),
+                        ],
+                        color: Colors.blue,
+                      ),
+                    ],
+                  ),
+                  MarkerLayer(
+                    markers: [
+                      Marker(
+                        width: 30.0,
+                        height: 30.0,
+                        point: LatLng(widget.latitude, widget.longitude),
+                        child: const FlutterLogo(),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

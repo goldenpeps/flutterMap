@@ -1,7 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:carousel_slider/carousel_slider.dart';
-import 'MapLocation.dart';
+import 'package:projetfinal/maplocation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class HomePage extends StatefulWidget {
@@ -11,9 +12,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   String locationText = 'Obtenir la localisation...';
-  TextEditingController _textInputController = TextEditingController();
-  static const String _keyData = 'myData';
-  static const String _keyExpiration = 'expirationTime';
+  final TextEditingController _textInputController = TextEditingController();
   String message = "";
 
   final List<String> carouselImages = [
@@ -32,30 +31,28 @@ class _HomePageState extends State<HomePage> {
   Future<void> _getDataIfNotExpired() async {
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
-      String? data = prefs.getString(_keyData);
-      String? expirationTimeStr = prefs.getString(_keyExpiration);
+      String? data = prefs.getString(AppConstants.keyData);
+      String? expirationTimeStr = prefs.getString(AppConstants.keyExpiration);
       if (data == null || expirationTimeStr == null) {
-        setState(() {
-          message = 'No data or expiration time found in SharedPreferences.';
-        });
+        setState(() {});
         return; // No data or expiration time found.
       }
       DateTime expirationTime = DateTime.parse(expirationTimeStr);
       if (expirationTime.isAfter(DateTime.now())) {
         setState(() {
-          message = 'last localisation : $data';
+          message = 'last research : $data';
         });
       } else {
         // Data has expired. Remove it from SharedPreferences.
-        await prefs.remove(_keyData);
-        await prefs.remove(_keyExpiration);
+        await prefs.remove(AppConstants.keyData);
+        await prefs.remove(AppConstants.keyExpiration);
         setState(() {
           message = 'Data has expired. Removed from SharedPreferences.';
         });
       }
-    } catch (e) {
+    } catch (error) {
       setState(() {
-        message = 'Error retrieving data from SharedPreferences: $e';
+        message = 'Error retrieving data from SharedPreferences: $error';
       });
     }
   }
@@ -69,8 +66,7 @@ class _HomePageState extends State<HomePage> {
         locationText =
         'Latitude: ${position.latitude}, Longitude: ${position.longitude}';
       });
-    } catch (e) {
-      print(e.toString());
+    } catch (error) {
       setState(() {
         locationText = 'Impossible d\'obtenir la localisation.';
       });
@@ -79,6 +75,7 @@ class _HomePageState extends State<HomePage> {
 
   void _navigateToMapLocation() {
     String userInput = _textInputController.text;
+
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -92,7 +89,14 @@ class _HomePageState extends State<HomePage> {
           userInput: userInput,
         ),
       ),
-    );
+    ).then((value) {
+      // Mettre à jour les données avec la valeur renvoyée depuis MapLocation
+      if (value != null) {
+        setState(() {
+          message = 'last research : $value';
+        });
+      }
+    });
   }
 
   @override
@@ -129,7 +133,7 @@ class _HomePageState extends State<HomePage> {
           ),
           Text(
             message,
-            style:TextStyle(fontSize: 18),
+            style:const TextStyle(fontSize: 18),
           ),
         ],
       ),
