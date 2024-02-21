@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'dart:math' show acos, cos, sin;
+import 'dart:math' show cos, sqrt, asin;
+import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'key.dart';
+import 'package:flutter/material.dart';
 
 //données de recherche
 class AppConstants {
@@ -18,21 +20,31 @@ class MapLocation extends StatefulWidget {
   final String userInput;
 
   const MapLocation({
+    Key? key,
     required this.latitude,
     required this.longitude,
     required this.userInput,
-  });
+  }) : super(key: key);
 
   @override
   _MapLocationState createState() => _MapLocationState();
 }
 
 class _MapLocationState extends State<MapLocation> {
-  String userCoordinates = '';
-  double calc = 0.0;
-  double userLatex = 0.0;
-  double userLngex = 0.0;
+  //coordonnées et calculdistance
+  double calCul = 0.0;
+  LatLng userLatLng = const LatLng(0.0, 0.0);
 
+  //variable controlleur pour tracer la ligne sur la map
+  GoogleMapController? mapController;
+  late PolylinePoints polylinePoints;
+  List<LatLng> polylineCoordinates = [];
+  Map<PolylineId, Polyline> polylines = {};
+
+  //valeur a mettre en cache et la durée
+  static const String _keyData = 'myData';
+  static const String _keyExpiration = 'expirationTime';
+  
   @override
   void initState() {
     super.initState();
@@ -54,117 +66,120 @@ class _MapLocationState extends State<MapLocation> {
 
   //recherche coordonnées
   Future<void> fetchCoordinates() async {
+    //appelle les coordonnées carte pour lafficher (API)
     final response = await http.get(
       Uri.parse('https://nominatim.openstreetmap.org/search?format=json&q=${widget.userInput}'),
     );
-
+    //reponse de l'api valide
     if (response.statusCode == 200) {
+      //decode valeur
       final List<dynamic> data = json.decode(response.body);
       if (data.isNotEmpty) {
+        //recuperation des localisation des données et parametrage des valeurs globals
         final double userLat = double.parse(data[0]['lat']);
         final double userLng = double.parse(data[0]['lon']);
-        setState(() {
-          userCoordinates = 'User Coordinates: $userLat, $userLng';
-          userLatex = userLat;
-          userLngex = userLng;
-          calc = distanceVolBird(widget.latitude, widget.longitude, userLat, userLng);
-          saveDataWithExpiration(widget.userInput, const Duration(hours: 2, minutes: 3, seconds: 2));
-        });
-      } else {
-        setState(() {
-          userCoordinates = 'No coordinates found for ${widget.userInput}';
-        });
+
+        //set position du marker destination sur la carte
+        userLatLng = LatLng(userLat, userLng);
+
+        //direction vers la creation du chemin
+        await _createPolylines(widget.latitude, widget.longitude, userLat, userLng);
+
+        //sauvegarde des données
+        await saveDataWithExpiration(widget.userInput, const Duration(hours: 2, minutes: 3, seconds: 2));
+        //affichage sur la map
+        setState(() {});
       }
     } else {
-      // Handle error
+      print('error');
     }
   }
 
-  //calcul distance
-  double distanceVolBird(double lat1, double lon1, double lat2, double lon2) {
-    const rayonTerre = 6371.0;
-    final l1 = _degreesToRadians(lat1);
-    final l2 = _degreesToRadians(lat2);
-    final deltaLon = _degreesToRadians(lon2 - lon1);
-
-    final distance = acos(sin(l1) * sin(l2) + cos(l1) * cos(l2) * cos(deltaLon)) * rayonTerre;
-
-    return distance;
+  //fonction cretations de la lignes
+  Future<void> _createPolylines(
+    double startLatitude,
+    double startLongitude,
+    double destinationLatitude,
+    double destinationLongitude,
+  ) async {
+    polylinePoints = PolylinePoints();
+    PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
+      cleApi,
+      PointLatLng(startLatitude, startLongitude),
+      PointLatLng(destinationLatitude, destinationLongitude),
+      travelMode: TravelMode.driving,
+    );
+    if (result.points.isNotEmpty) {
+      for (var point in result.points) {
+        polylineCoordinates.add(LatLng(point.latitude, point.longitude));
+      }
+    }
+    for (var i = 0; i < polylineCoordinates.length - 1; i++) {
+      calCul += distanceVolBird(polylineCoordinates[i].latitude, polylineCoordinates[i].longitude, polylineCoordinates[i + 1].latitude,
+          polylineCoordinates[i + 1].longitude);
+    }
+    PolylineId id = const PolylineId('poly');
+    Polyline polyline = Polyline(polylineId: id, color: Colors.deepPurple, points: polylineCoordinates, width: 3);
+    polylines[id] = polyline;
   }
 
-  double _degreesToRadians(double degrees) {
-    return degrees * (pi / 180.0);
+  double distanceVolBird(double lat1, double lon1, double lat2, double lon2) {
+    var p = 0.017453292519943295;
+    var a = 0.5 - cos((lat2 - lat1) * p) / 2 + cos(lat1 * p) * cos(lat2 * p) * (1 - cos((lon2 - lon1) * p)) / 2;
+    return 12742 * asin(sqrt(a));
   }
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
-        // Empêcher la fermeture automatique en appuyant sur la flèche de retour
-        Navigator.of(context).pop(widget.userInput);
-        return false;
-      },
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Map Location'),
-          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        ),
-        body: Column(
+    return Scaffold(
+      appBar: AppBar(
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 20),
             Text(
-              'latitude: ${widget.latitude}',
-              style: const TextStyle(fontSize: 18),
+              'Destination: ${widget.userInput}',
+              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
             ),
             Text(
-              'longitude: ${widget.longitude}',
-              style: const TextStyle(fontSize: 18),
+              'Distance: ${calCul.toStringAsFixed(2)} km',
+              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
             ),
-            Text(
-              'User Input: ${widget.userInput}',
-              style: const TextStyle(fontSize: 18),
-            ),
-            Text(
-              'distance: $calc km', // Display user coordinates here
-              style: const TextStyle(fontSize: 18),
-            ),
-            Text(
-              userCoordinates, // Display user coordinates here
-              style: const TextStyle(fontSize: 18),
-            ),
-            Expanded(
-              child: FlutterMap(
-                options: MapOptions(
-                  initialCenter: LatLng(widget.latitude, widget.longitude),
-                  initialZoom: 9.2,
+          ],
+        ),
+        backgroundColor: Theme.of(context).colorScheme.primary,
+      ),
+      body: Column(
+        children: [
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Container(
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.deepPurple),
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                children: [
-                  TileLayer(
-                    urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                    subdomains: const ['a', 'b', 'c'],
+                child: GoogleMap(
+                  onMapCreated: (controller) {
+                    mapController = controller;
+                  },
+                  initialCameraPosition: CameraPosition(
+                    target: LatLng(widget.latitude, widget.longitude),
+                    zoom: 9.2,
                   ),
-                  PolylineLayer(
-                    polylines: [
-                      Polyline(
-                        points: [
-                          LatLng(widget.latitude, widget.longitude),
-                          LatLng(userLatex, userLngex),
-                        ],
-                        color: Colors.blue,
-                      ),
-                    ],
-                  ),
-                  MarkerLayer(
-                    markers: [
-                      Marker(
-                        width: 30.0,
-                        height: 30.0,
-                        point: LatLng(widget.latitude, widget.longitude),
-                        child: const FlutterLogo(),
-                      ),
-                    ],
-                  ),
-                ],
+                  markers: {
+                    Marker(
+                      markerId: const MarkerId('start'),
+                      position: LatLng(widget.latitude, widget.longitude),
+                      icon: BitmapDescriptor.defaultMarker,
+                    ),
+                    Marker(
+                      markerId: const MarkerId('destination'),
+                      position: userLatLng,
+                      icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
+                    ),
+                  },
+                  polylines: Set<Polyline>.of(polylines.values),
+                ),
               ),
             ),
           ],

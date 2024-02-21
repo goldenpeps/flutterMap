@@ -1,8 +1,12 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:projetfinal/key.dart';
 import 'package:projetfinal/maplocation.dart'; //importation pour récupérer les données de recherche
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:google_places_flutter/google_places_flutter.dart';
+import 'package:google_places_flutter/model/prediction.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -15,12 +19,6 @@ class _HomePageState extends State<HomePage> {
   String locationText = 'Obtenir la localisation...';
   final TextEditingController _textInputController = TextEditingController();
   String message = "";
-
-  final List<String> carouselImages = [
-    'assets/images/image1.png',
-    'assets/images/image2.png',
-    'assets/images/image1.jpg',
-  ];
 
   @override
   void initState() {
@@ -101,38 +99,95 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+      body: Container(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Image
+            Image.asset(
+              'assets/images/logo.png',  // Remplacez 'assets/votre_image.png' par le chemin de votre image
+              width: 300,  // ajustez la largeur selon vos besoins
+              height: 300, // ajustez la hauteur selon vos besoins
+            ),
+            const SizedBox(height: 16),
+            // Row with AutoCompleteTextField and Button
+            Row(
+              children: [
+                Expanded(
+                  child: placesAutoCompleteTextField(),
+                ),
+                const SizedBox(width: 16),
+                ElevatedButton(
+                  onPressed: () {
+                    _navigateToMapLocation();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    backgroundColor: Colors.deepPurple,
+                    padding: const EdgeInsets.all(16),
+                    textStyle: const TextStyle(fontSize: 18),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: const Text('Valider'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+           Text(
+            message,
+          style: const TextStyle(
+            fontSize: 16,
+            color: Colors.black,
+          ),),
+          ],
+        ),
       ),
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          CarouselSlider(
-            options: CarouselOptions(
-              height: 200,
-              enableInfiniteScroll: true,
-              autoPlay: true,
+    );
+  }
+
+
+  Widget placesAutoCompleteTextField() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: GooglePlaceAutoCompleteTextField(
+        textEditingController: _textInputController,
+        googleAPIKey: cleApi,
+        inputDecoration: const InputDecoration(
+          hintText: "Search your location",
+          border: InputBorder.none,
+          enabledBorder: InputBorder.none,
+        ),
+        debounceTime: 400,
+        countries: ["usa", "fr"],
+        isLatLngRequired: true,
+        getPlaceDetailWithLatLng: (Prediction prediction) {
+          print("placeDetails" + prediction.lat.toString());
+        },
+        itemClick: (Prediction prediction) {
+          _textInputController.text = prediction.description ?? "";
+          _textInputController.selection = TextSelection.fromPosition(
+              TextPosition(offset: prediction.description?.length ?? 0));
+        },
+        seperatedBuilder: const Divider(),
+        containerHorizontalPadding: 10,
+        itemBuilder: (context, index, Prediction prediction) {
+          return Container(
+            padding: const EdgeInsets.all(10),
+            child: Row(
+              children: [
+                const Icon(Icons.location_on),
+                const SizedBox(
+                  width: 7,
+                ),
+                Expanded(child: Text("${prediction.description ?? ""}"))
+              ],
             ),
-            items: carouselImages.map((item) => Image.asset(item)).toList(),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: TextField(
-              controller: _textInputController,
-              decoration: const InputDecoration(
-                hintText: 'Entrez quelque chose...',
-              ),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: _navigateToMapLocation,
-            child: const Text('Valider'),
-          ),
-          Text(
-            message, // zone de teste de la dernière recherche
-            style: const TextStyle(fontSize: 18),
-          ),
-        ],
+          );
+        },
+        isCrossBtnShown: true,
       ),
     );
   }
