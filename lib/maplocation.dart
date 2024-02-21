@@ -3,7 +3,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'dart:math' show sin, cos, sqrt, atan2;
+import 'dart:math' show acos, cos, sin;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AppConstants {
@@ -78,23 +78,20 @@ class _MapLocationState extends State<MapLocation> {
   }
 
   double distanceVolBird(double lat1, double lon1, double lat2, double lon2) {
-    double rayonTerre = 6371.0;
-    double deltaLon = lon2 - lon1;
-    double deltaLat = lat2 - lat1;
-    lat1 = _degreesToRadians(lat1);
-    lon1 = _degreesToRadians(lon1);
-    lat2 = _degreesToRadians(lat2);
-    lon2 = _degreesToRadians(lon2);
-    double a = sin(deltaLat / 2) * sin(deltaLat / 2) +
-        cos(lat1) * cos(lat2) * sin(deltaLon / 2) * sin(deltaLon / 2);
-    double c = 2 * atan2(sqrt(a), sqrt(1 - a));
-    double distance = rayonTerre * c;
+    const rayonTerre = 6371.0;
+    final l1 = _degreesToRadians(lat1);
+    final l2 = _degreesToRadians(lat2);
+    final deltaLon = _degreesToRadians(lon2 - lon1);
+
+    final distance = acos(sin(l1) * sin(l2) + cos(l1) * cos(l2) * cos(deltaLon)) * rayonTerre;
+
     return distance;
   }
 
   double _degreesToRadians(double degrees) {
-    return degrees * (3.141592653589793 / 180.0);
+    return degrees * (pi / 180.0);
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -125,7 +122,7 @@ class _MapLocationState extends State<MapLocation> {
               style: const TextStyle(fontSize: 18),
             ),
             Text(
-              'distance: $calc', // Display user coordinates here
+              'distance: $calc km', // Display user coordinates here
               style: const TextStyle(fontSize: 18),
             ),
             Text(
