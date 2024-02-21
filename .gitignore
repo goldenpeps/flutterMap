@@ -9,7 +9,10 @@
 .history
 .svn/
 migrate_working_dir/
-./lib/key.dart
+
+# Ignore keys.dart file
+lib/key.dart
+
 # IntelliJ related
 *.iml
 *.ipr
