@@ -1,1 +1,1 @@
-const String cleApi = "AIzaSyDJlO4o5TwfxLIdKxj1WYtaPpVsz3Xjr1E";
+const String cleApi = "";

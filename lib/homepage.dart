@@ -1,7 +1,5 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:carousel_slider/carousel_slider.dart';
 import 'package:projetfinal/key.dart';
 import 'package:projetfinal/maplocation.dart'; //importation pour récupérer les données de recherche
 import 'package:shared_preferences/shared_preferences.dart';
@@ -161,11 +159,9 @@ class _HomePageState extends State<HomePage> {
           enabledBorder: InputBorder.none,
         ),
         debounceTime: 400,
-        countries: ["usa", "fr"],
+        countries: const ["usa", "fr"],
         isLatLngRequired: true,
-        getPlaceDetailWithLatLng: (Prediction prediction) {
-          print("placeDetails" + prediction.lat.toString());
-        },
+        getPlaceDetailWithLatLng: (Prediction prediction) {},
         itemClick: (Prediction prediction) {
           _textInputController.text = prediction.description ?? "";
           _textInputController.selection = TextSelection.fromPosition(
@@ -182,7 +178,7 @@ class _HomePageState extends State<HomePage> {
                 const SizedBox(
                   width: 7,
                 ),
-                Expanded(child: Text("${prediction.description ?? ""}"))
+                Expanded(child: Text(prediction.description ?? ""))
               ],
             ),
           );

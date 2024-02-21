@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'dart:convert';
@@ -6,7 +7,6 @@ import 'dart:math' show cos, sqrt, asin;
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'key.dart';
-import 'package:flutter/material.dart';
 
 //données de recherche
 class AppConstants {
@@ -40,10 +40,6 @@ class _MapLocationState extends State<MapLocation> {
   late PolylinePoints polylinePoints;
   List<LatLng> polylineCoordinates = [];
   Map<PolylineId, Polyline> polylines = {};
-
-  //valeur a mettre en cache et la durée
-  static const String _keyData = 'myData';
-  static const String _keyExpiration = 'expirationTime';
   
   @override
   void initState() {
@@ -91,7 +87,9 @@ class _MapLocationState extends State<MapLocation> {
         setState(() {});
       }
     } else {
-      print('error');
+      if (kDebugMode) {
+        print('error');
+      }
     }
   }
 
@@ -138,11 +136,11 @@ class _MapLocationState extends State<MapLocation> {
           children: [
             Text(
               'Destination: ${widget.userInput}',
-              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+              style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
             ),
             Text(
               'Distance: ${calCul.toStringAsFixed(2)} km',
-              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+              style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
             ),
           ],
         ),
@@ -182,8 +180,8 @@ class _MapLocationState extends State<MapLocation> {
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
