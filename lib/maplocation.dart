@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'dart:math' show acos, cos, sin;
 import 'package:shared_preferences/shared_preferences.dart';
 
+//données de recherche
 class AppConstants {
   static const String keyData = 'myData';
   static const String keyExpiration = 'expirationTime';
@@ -38,6 +39,7 @@ class _MapLocationState extends State<MapLocation> {
     fetchCoordinates();
   }
 
+  //sauvegarde des données + durée de vie
   Future<bool> saveDataWithExpiration(String data, Duration expirationDuration) async {
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -50,6 +52,7 @@ class _MapLocationState extends State<MapLocation> {
     }
   }
 
+  //recherche coordonnées
   Future<void> fetchCoordinates() async {
     final response = await http.get(
       Uri.parse('https://nominatim.openstreetmap.org/search?format=json&q=${widget.userInput}'),
@@ -77,6 +80,7 @@ class _MapLocationState extends State<MapLocation> {
     }
   }
 
+  //calcul distance
   double distanceVolBird(double lat1, double lon1, double lat2, double lon2) {
     const rayonTerre = 6371.0;
     final l1 = _degreesToRadians(lat1);
@@ -91,7 +95,6 @@ class _MapLocationState extends State<MapLocation> {
   double _degreesToRadians(double degrees) {
     return degrees * (pi / 180.0);
   }
-
 
   @override
   Widget build(BuildContext context) {

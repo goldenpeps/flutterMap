@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:carousel_slider/carousel_slider.dart';
-import 'package:projetfinal/maplocation.dart';
+import 'package:projetfinal/maplocation.dart'; //importation pour récupérer les données de recherche
 import 'package:shared_preferences/shared_preferences.dart';
 
 class HomePage extends StatefulWidget {
@@ -29,6 +29,7 @@ class _HomePageState extends State<HomePage> {
     _getDataIfNotExpired();
   }
 
+  // vérification de la validité des données enregistrées
   Future<void> _getDataIfNotExpired() async {
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -58,14 +59,14 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  //obtention de la position de l'utilisateur
   Future<void> _getLocation() async {
     try {
       Position position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
       );
       setState(() {
-        locationText =
-        'Latitude: ${position.latitude}, Longitude: ${position.longitude}';
+        locationText = 'Latitude: ${position.latitude}, Longitude: ${position.longitude}';
       });
     } catch (error) {
       setState(() {
@@ -74,6 +75,7 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  //intégration de la page maplocation sur localisation de l'utilisateur
   void _navigateToMapLocation() {
     String userInput = _textInputController.text;
 
@@ -81,12 +83,8 @@ class _HomePageState extends State<HomePage> {
       context,
       MaterialPageRoute(
         builder: (context) => MapLocation(
-          latitude: locationText.isNotEmpty
-              ? double.parse(locationText.split(",")[0].split(":")[1].trim())
-              : 0.0,
-          longitude: locationText.isNotEmpty
-              ? double.parse(locationText.split(",")[1].split(":")[1].trim())
-              : 0.0,
+          latitude: locationText.isNotEmpty ? double.parse(locationText.split(",")[0].split(":")[1].trim()) : 0.0,
+          longitude: locationText.isNotEmpty ? double.parse(locationText.split(",")[1].split(":")[1].trim()) : 0.0,
           userInput: userInput,
         ),
       ),
@@ -94,7 +92,7 @@ class _HomePageState extends State<HomePage> {
       // Mettre à jour les données avec la valeur renvoyée depuis MapLocation
       if (value != null) {
         setState(() {
-          message = 'last research : $value';
+          message = 'last research : $value'; // texte de la dermière recherche
         });
       }
     });
@@ -107,10 +105,8 @@ class _HomePageState extends State<HomePage> {
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
       ),
       body: Column(
-
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-
           CarouselSlider(
             options: CarouselOptions(
               height: 200,
@@ -123,7 +119,7 @@ class _HomePageState extends State<HomePage> {
             padding: const EdgeInsets.all(16.0),
             child: TextField(
               controller: _textInputController,
-              decoration: const  InputDecoration(
+              decoration: const InputDecoration(
                 hintText: 'Entrez quelque chose...',
               ),
             ),
@@ -133,8 +129,8 @@ class _HomePageState extends State<HomePage> {
             child: const Text('Valider'),
           ),
           Text(
-            message,
-            style:const TextStyle(fontSize: 18),
+            message, // zone de teste de la dernière recherche
+            style: const TextStyle(fontSize: 18),
           ),
         ],
       ),
