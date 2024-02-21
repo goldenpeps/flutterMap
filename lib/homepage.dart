@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:projetfinal/key.dart';
-import 'MapLocation.dart';
+import 'package:projetfinal/maplocation.dart'; //importation pour récupérer les données de recherche
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_places_flutter/google_places_flutter.dart';
 import 'package:google_places_flutter/model/prediction.dart';
@@ -16,10 +16,8 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  String locationText = 'obtenir la localisation...';
+  String locationText = 'Obtenir la localisation...';
   final TextEditingController _textInputController = TextEditingController();
-  static const String _keyData = 'myData';
-  static const String _keyExpiration = 'expirationTime';
   String message = "";
 
   @override
@@ -29,68 +27,73 @@ class _HomePageState extends State<HomePage> {
     _getDataIfNotExpired();
   }
 
+  // vérification de la validité des données enregistrées
   Future<void> _getDataIfNotExpired() async {
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
-      String? data = prefs.getString(_keyData);
-      String? expirationTimeStr = prefs.getString(_keyExpiration);
+      String? data = prefs.getString(AppConstants.keyData);
+      String? expirationTimeStr = prefs.getString(AppConstants.keyExpiration);
       if (data == null || expirationTimeStr == null) {
-        setState(() {
-          message = 'No data or expiration time found in SharedPreferences.';
-        });
-        return;
+        setState(() {});
+        return; // No data or expiration time found.
       }
       DateTime expirationTime = DateTime.parse(expirationTimeStr);
       if (expirationTime.isAfter(DateTime.now())) {
         setState(() {
-          message = 'last localisation : $data';
+          message = 'last research : $data';
         });
       } else {
-        await prefs.remove(_keyData);
-        await prefs.remove(_keyExpiration);
+        // Data has expired. Remove it from SharedPreferences.
+        await prefs.remove(AppConstants.keyData);
+        await prefs.remove(AppConstants.keyExpiration);
         setState(() {
           message = 'Data has expired. Removed from SharedPreferences.';
         });
       }
-    } catch (e) {
+    } catch (error) {
       setState(() {
-        message = 'Error retrieving data from SharedPreferences: $e';
+        message = 'Error retrieving data from SharedPreferences: $error';
       });
     }
   }
 
+  //obtention de la position de l'utilisateur
   Future<void> _getLocation() async {
     try {
       Position position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
       );
       setState(() {
-        locationText =
-        'Latitude: ${position.latitude}, Longitude: ${position.longitude}';
+        locationText = 'Latitude: ${position.latitude}, Longitude: ${position.longitude}';
       });
-    } catch (e) {
+    } catch (error) {
       setState(() {
         locationText = 'Impossible d\'obtenir la localisation.';
       });
     }
   }
 
+  //intégration de la page maplocation sur localisation de l'utilisateur
   void _navigateToMapLocation() {
     String userInput = _textInputController.text;
+
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => MapLocation(
-          latitude: locationText.isNotEmpty
-              ? double.parse(locationText.split(",")[0].split(":")[1].trim())
-              : 0.0,
-          longitude: locationText.isNotEmpty
-              ? double.parse(locationText.split(",")[1].split(":")[1].trim())
-              : 0.0,
+          latitude: locationText.isNotEmpty ? double.parse(locationText.split(",")[0].split(":")[1].trim()) : 0.0,
+          longitude: locationText.isNotEmpty ? double.parse(locationText.split(",")[1].split(":")[1].trim()) : 0.0,
           userInput: userInput,
         ),
       ),
-    );
+    ).then((value) {
+      // Mettre à jour les données avec la valeur renvoyée depuis MapLocation
+      if (value != null) {
+        setState(() {
+          message = 'last research : $value'; // texte de la dermière recherche
+        });
+      }
+    });
   }
 
   @override

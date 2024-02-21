@@ -8,6 +8,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'key.dart';
 import 'package:flutter/material.dart';
 
+//données de recherche
+class AppConstants {
+  static const String keyData = 'myData';
+  static const String keyExpiration = 'expirationTime';
+}
+
 class MapLocation extends StatefulWidget {
   final double latitude;
   final double longitude;
@@ -38,26 +44,27 @@ class _MapLocationState extends State<MapLocation> {
   //valeur a mettre en cache et la durée
   static const String _keyData = 'myData';
   static const String _keyExpiration = 'expirationTime';
-
+  
   @override
   void initState() {
     super.initState();
     fetchCoordinates();
   }
 
-  //fonctionn sauvegarder les données
+  //sauvegarde des données + durée de vie
   Future<bool> saveDataWithExpiration(String data, Duration expirationDuration) async {
-    //instance et temps
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    DateTime expirationTime = DateTime.now().add(expirationDuration);
-    //sauvegarde en cache
-    await prefs.setString(_keyData, data);
-    await prefs.setString(_keyExpiration, expirationTime.toIso8601String());
-
-    return true;
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      DateTime expirationTime = DateTime.now().add(expirationDuration);
+      await prefs.setString(AppConstants.keyData, data);
+      await prefs.setString(AppConstants.keyExpiration, expirationTime.toIso8601String());
+      return true;
+    } catch (error) {
+      return false;
+    }
   }
 
-  //fonction  trouver les coordonnées
+  //recherche coordonnées
   Future<void> fetchCoordinates() async {
     //appelle les coordonnées carte pour lafficher (API)
     final response = await http.get(
@@ -175,8 +182,8 @@ class _MapLocationState extends State<MapLocation> {
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
