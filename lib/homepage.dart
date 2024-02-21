@@ -2,26 +2,25 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:projetfinal/key.dart';
 import 'MapLocation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:google_places_flutter/google_places_flutter.dart';
+import 'package:google_places_flutter/model/prediction.dart';
 
 class HomePage extends StatefulWidget {
+  const HomePage({Key? key}) : super(key: key);
+
   @override
   State<HomePage> createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
-  String locationText = 'Obtenir la localisation...';
-  TextEditingController _textInputController = TextEditingController();
+  String locationText = 'obtenir la localisation...';
+  final TextEditingController _textInputController = TextEditingController();
   static const String _keyData = 'myData';
   static const String _keyExpiration = 'expirationTime';
   String message = "";
-
-  final List<String> carouselImages = [
-    'assets/images/image1.png',
-    'assets/images/image2.png',
-    'assets/images/image1.jpg',
-  ];
 
   @override
   void initState() {
@@ -29,6 +28,7 @@ class _HomePageState extends State<HomePage> {
     _getLocation();
     _getDataIfNotExpired();
   }
+
   Future<void> _getDataIfNotExpired() async {
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -38,7 +38,7 @@ class _HomePageState extends State<HomePage> {
         setState(() {
           message = 'No data or expiration time found in SharedPreferences.';
         });
-        return; // No data or expiration time found.
+        return;
       }
       DateTime expirationTime = DateTime.parse(expirationTimeStr);
       if (expirationTime.isAfter(DateTime.now())) {
@@ -46,7 +46,6 @@ class _HomePageState extends State<HomePage> {
           message = 'last localisation : $data';
         });
       } else {
-        // Data has expired. Remove it from SharedPreferences.
         await prefs.remove(_keyData);
         await prefs.remove(_keyExpiration);
         setState(() {
@@ -59,6 +58,7 @@ class _HomePageState extends State<HomePage> {
       });
     }
   }
+
   Future<void> _getLocation() async {
     try {
       Position position = await Geolocator.getCurrentPosition(
@@ -69,7 +69,6 @@ class _HomePageState extends State<HomePage> {
         'Latitude: ${position.latitude}, Longitude: ${position.longitude}';
       });
     } catch (e) {
-      print(e.toString());
       setState(() {
         locationText = 'Impossible d\'obtenir la localisation.';
       });
@@ -93,71 +92,99 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Column (
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          CarouselSlider(
-            options: CarouselOptions(
-              height: 200,
-              enableInfiniteScroll: true,
-              autoPlay: true,
+      body: Container(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Image
+            Image.asset(
+              'assets/images/logo.png',  // Remplacez 'assets/votre_image.png' par le chemin de votre image
+              width: 300,  // ajustez la largeur selon vos besoins
+              height: 300, // ajustez la hauteur selon vos besoins
             ),
-            items: carouselImages.map((item) => Image.asset(item)).toList(),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: TextField(
-              controller: _textInputController,
-              decoration: const InputDecoration(
-                hintText: 'Entrez quelque chose...',
-                border: OutlineInputBorder(),
-              ),
+            const SizedBox(height: 16),
+            // Row with AutoCompleteTextField and Button
+            Row(
+              children: [
+                Expanded(
+                  child: placesAutoCompleteTextField(),
+                ),
+                const SizedBox(width: 16),
+                ElevatedButton(
+                  onPressed: () {
+                    _navigateToMapLocation();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    backgroundColor: Colors.deepPurple,
+                    padding: const EdgeInsets.all(16),
+                    textStyle: const TextStyle(fontSize: 18),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: const Text('Valider'),
+                ),
+              ],
             ),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              // Check if the input is not empty
-              if (_textInputController.text.isNotEmpty) {
-                // If input is valid, navigate to map location
-                _navigateToMapLocation();
-              } else {
-                // If input is not valid, you can show an error message or take other actions
-                // For now, let's just print an error message
-                print('Veuillez entrer quelque chose avant de valider.');
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              foregroundColor: Colors.white,
-              backgroundColor: Colors.blue,
-              padding: EdgeInsets.all(16),
-              textStyle: TextStyle(fontSize: 18),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
+            const SizedBox(height: 16),
+           Text(
+            message,
+          style: const TextStyle(
+            fontSize: 16,
+            color: Colors.black,
+          ),),
+          ],
+        ),
+      ),
+    );
+  }
+
+
+  Widget placesAutoCompleteTextField() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: GooglePlaceAutoCompleteTextField(
+        textEditingController: _textInputController,
+        googleAPIKey: cleApi,
+        inputDecoration: const InputDecoration(
+          hintText: "Search your location",
+          border: InputBorder.none,
+          enabledBorder: InputBorder.none,
+        ),
+        debounceTime: 400,
+        countries: ["usa", "fr"],
+        isLatLngRequired: true,
+        getPlaceDetailWithLatLng: (Prediction prediction) {
+          print("placeDetails" + prediction.lat.toString());
+        },
+        itemClick: (Prediction prediction) {
+          _textInputController.text = prediction.description ?? "";
+          _textInputController.selection = TextSelection.fromPosition(
+              TextPosition(offset: prediction.description?.length ?? 0));
+        },
+        seperatedBuilder: const Divider(),
+        containerHorizontalPadding: 10,
+        itemBuilder: (context, index, Prediction prediction) {
+          return Container(
+            padding: const EdgeInsets.all(10),
+            child: Row(
+              children: [
+                const Icon(Icons.location_on),
+                const SizedBox(
+                  width: 7,
+                ),
+                Expanded(child: Text("${prediction.description ?? ""}"))
+              ],
             ),
-            child: const Text('Valider'),
-          ),
-          const Column(
-            children: <Widget>[
-              SizedBox(height: 100),
-            ],
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [Container(margin: const EdgeInsets.all(15.0),
-              padding: const EdgeInsets.all(16.0),
-              decoration: BoxDecoration(
-                  border: Border.all(color: Colors.blueAccent)
-              ),
-              child: Text(
-                message,
-                style:TextStyle(fontSize: 18),
-              ),)],
-          ),
-        ],
+          );
+        },
+        isCrossBtnShown: true,
       ),
     );
   }

@@ -19,6 +19,7 @@ dependencies:
   google_directions_api: ^0.10.0
   geocoding: ^2.0.0
   flutter_polyline_points: ^2.0.0
+  google_places_flutter: ^2.0.8
 
 
 dev_dependencies:
