@@ -38,19 +38,19 @@ class _HomePageState extends State<HomePage> {
       DateTime expirationTime = DateTime.parse(expirationTimeStr);
       if (expirationTime.isAfter(DateTime.now())) {
         setState(() {
-          message = 'last research : $data';
+          message = 'dernières recherches : $data';
         });
       } else {
         // Data has expired. Remove it from SharedPreferences.
         await prefs.remove(AppConstants.keyData);
         await prefs.remove(AppConstants.keyExpiration);
         setState(() {
-          message = 'Data has expired. Removed from SharedPreferences.';
+          message = 'Les données ont expiré. Supprimé des préférences partagées.';
         });
       }
     } catch (error) {
       setState(() {
-        message = 'Error retrieving data from SharedPreferences: $error';
+        message = 'Erreur lors de la récupération des données de SharedPreferences : $error';
       });
     }
   }
@@ -74,7 +74,6 @@ class _HomePageState extends State<HomePage> {
   //intégration de la page maplocation sur localisation de l'utilisateur
   void _navigateToMapLocation() {
     String userInput = _textInputController.text;
-
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -85,7 +84,6 @@ class _HomePageState extends State<HomePage> {
         ),
       ),
     ).then((value) {
-      // Mettre à jour les données avec la valeur renvoyée depuis MapLocation
       if (value != null) {
         setState(() {
           message = 'last research : $value'; // texte de la dermière recherche
@@ -97,16 +95,17 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
+      body: SingleChildScrollView(
+        child: Container(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
             // Image
             Image.asset(
               'assets/images/logo.png',  // Remplacez 'assets/votre_image.png' par le chemin de votre image
-              width: 300,  // ajustez la largeur selon vos besoins
-              height: 300, // ajustez la hauteur selon vos besoins
+              width: 250,  // ajustez la largeur selon vos besoins
+              height: 250, // ajustez la hauteur selon vos besoins
             ),
             const SizedBox(height: 16),
             // Row with AutoCompleteTextField and Button
@@ -143,6 +142,7 @@ class _HomePageState extends State<HomePage> {
           ],
         ),
       ),
+    ),
     );
   }
 
@@ -154,7 +154,7 @@ class _HomePageState extends State<HomePage> {
         textEditingController: _textInputController,
         googleAPIKey: cleApi,
         inputDecoration: const InputDecoration(
-          hintText: "Search your location",
+          hintText: "Où veux-tu aller",
           border: InputBorder.none,
           enabledBorder: InputBorder.none,
         ),

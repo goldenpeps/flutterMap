@@ -129,59 +129,66 @@ class _MapLocationState extends State<MapLocation> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Destination: ${widget.userInput}',
-              style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
-            ),
-            Text(
-              'Distance: ${calCul.toStringAsFixed(2)} km',
-              style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
-            ),
-          ],
+    return WillPopScope(
+      onWillPop: () async {
+        // Empêcher la fermeture automatique en appuyant sur la flèche de retour
+        Navigator.of(context).pop(widget.userInput);
+        return false;
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Destination: ${widget.userInput}',
+                style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+              ),
+              Text(
+                'Distance: ${calCul.toStringAsFixed(2)} km',
+                style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+              ),
+            ],
+          ),
+          backgroundColor: Theme.of(context).colorScheme.primary,
         ),
-        backgroundColor: Theme.of(context).colorScheme.primary,
-      ),
-      body: Column(
-        children: [
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Container(
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.deepPurple),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: GoogleMap(
-                  onMapCreated: (controller) {
-                    mapController = controller;
-                  },
-                  initialCameraPosition: CameraPosition(
-                    target: LatLng(widget.latitude, widget.longitude),
-                    zoom: 9.2,
+        body: Column(
+          children: [
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Container(
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.deepPurple),
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                  markers: {
-                    Marker(
-                      markerId: const MarkerId('start'),
-                      position: LatLng(widget.latitude, widget.longitude),
-                      icon: BitmapDescriptor.defaultMarker,
+                  child: GoogleMap(
+                    onMapCreated: (controller) {
+                      mapController = controller;
+                    },
+                    initialCameraPosition: CameraPosition(
+                      target: LatLng(widget.latitude, widget.longitude),
+                      zoom: 9.2,
                     ),
-                    Marker(
-                      markerId: const MarkerId('destination'),
-                      position: userLatLng,
-                      icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
-                    ),
-                  },
-                  polylines: Set<Polyline>.of(polylines.values),
+                    markers: {
+                      Marker(
+                        markerId: const MarkerId('start'),
+                        position: LatLng(widget.latitude, widget.longitude),
+                        icon: BitmapDescriptor.defaultMarker,
+                      ),
+                      Marker(
+                        markerId: const MarkerId('destination'),
+                        position: userLatLng,
+                        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
+                      ),
+                    },
+                    polylines: Set<Polyline>.of(polylines.values),
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
